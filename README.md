@@ -1,6 +1,14 @@
-# AuraAudio 🎧✨
+<p align="center">
+  <img src="app-icon.png" alt="AuraAudio Logo" width="128" height="128" style="border-radius: 28px;" />
+</p>
 
-<p align="left">
+<h1 align="center">AuraAudio 🎧✨</h1>
+
+<p align="center">
+  <b>A high-performance, distraction-free native desktop audiobook player crafted for immersion and offline listening.</b>
+</p>
+
+<p align="center">
   <a href="https://github.com/freddy777-01/AuraAudioBookReader/releases">
     <img src="https://img.shields.io/github/downloads/freddy777-01/AuraAudioBookReader/total.svg?style=flat-square&logo=github&color=f59e0b&label=Total%20Downloads" alt="Total Downloads" />
   </a>
@@ -11,9 +19,9 @@
   <img src="https://img.shields.io/badge/Privacy-100%25%20Offline%20%26%20Local-10b981?style=flat-square" alt="Privacy" />
 </p>
 
-> **A high-performance, distraction-free native desktop audiobook player crafted for immersion and offline listening.**
-
-AuraAudio gives you a premium, physical-book-like experience on your Windows PC. No subscriptions, no telemetry, and 100% offline.
+<p align="center">
+  AuraAudio gives you a premium, physical-book-like experience on your Windows PC. No subscriptions, no telemetry, and 100% offline.
+</p>
 
 ---
 
