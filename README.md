@@ -1,5 +1,16 @@
 # AuraAudio 🎧✨
 
+<p align="left">
+  <a href="https://github.com/freddy777-01/AuraAudioBookReader/releases">
+    <img src="https://img.shields.io/github/downloads/freddy777-01/AuraAudioBookReader/total.svg?style=flat-square&logo=github&color=f59e0b&label=Total%20Downloads" alt="Total Downloads" />
+  </a>
+  <a href="https://github.com/freddy777-01/AuraAudioBookReader/releases/latest">
+    <img src="https://img.shields.io/github/v/release/freddy777-01/AuraAudioBookReader?style=flat-square&color=10b981&label=Latest%20Version" alt="Latest Version" />
+  </a>
+  <img src="https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078d4?style=flat-square&logo=windows&logoColor=white" alt="Platform" />
+  <img src="https://img.shields.io/badge/Privacy-100%25%20Offline%20%26%20Local-10b981?style=flat-square" alt="Privacy" />
+</p>
+
 > **A high-performance, distraction-free native desktop audiobook player crafted for immersion and offline listening.**
 
 AuraAudio gives you a premium, physical-book-like experience on your Windows PC. No subscriptions, no telemetry, and 100% offline.
@@ -51,8 +62,19 @@ AuraAudio gives you a premium, physical-book-like experience on your Windows PC.
 
 ## 🚀 Installation & Running
 
-### Windows Installer
-Download the latest Windows installer (`AuraAudio-Setup.exe` or `.msi`) from the [Releases](https://github.com/freddy777-01/AuraAudioBookReader/releases) section, run the installer, and enjoy your audiobooks!
+### 📥 Download for Windows (64-bit)
+
+<p align="left">
+  <a href="https://github.com/freddy777-01/AuraAudioBookReader/releases/latest">
+    <img src="https://img.shields.io/badge/Download_AuraAudio-Windows_Installer-f59e0b?style=for-the-badge&logo=windows&logoColor=white" alt="Download AuraAudio for Windows" />
+  </a>
+</p>
+
+1. Download **`AuraAudio_0.1.0_x64-setup.exe`** from the [Latest Release](https://github.com/freddy777-01/AuraAudioBookReader/releases/latest) page.
+2. Run the installer and launch AuraAudio.
+3. Add your audiobook folders and enjoy listening!
+
+> **Note on Tracking**: Download statistics are tracked automatically by GitHub Releases and reflected live on the **Total Downloads** badge above.
 
 ### Building from Source
 
