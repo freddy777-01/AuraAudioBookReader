@@ -19,52 +19,55 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
 
   // Smooth continuous progression animation from 0% to ~90% while loading
   useEffect(() => {
+    if (!isLoading) {
+      setProgress(100);
+      setStatusText('Ready');
+      setIsReady(true);
+      return;
+    }
+
     const interval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 90) {
-          clearInterval(interval);
-          return 90;
-        }
-        // Smooth progression increments
+        if (prev >= 90) return 90;
         const increment = prev < 30 ? 2.8 : prev < 65 ? 1.8 : 1.1;
         return Math.min(90, prev + increment);
       });
     }, 30);
 
     return () => clearInterval(interval);
-  }, []);
-
-  // When backend finishes loading, glide smoothly to 100% and show "Ready"
-  useEffect(() => {
-    if (!isLoading) {
-      const finishTimer = setTimeout(() => {
-        setProgress(100);
-        setStatusText('Ready');
-        setIsReady(true);
-      }, 150);
-
-      return () => clearTimeout(finishTimer);
-    }
   }, [isLoading]);
 
-  // Gracefully transition out once 100% "Ready" is reached
+  // When loading finishes, transition smoothly from 100% to main app
   useEffect(() => {
-    if (isReady && progress >= 100) {
+    if (!isLoading || isReady) {
+      setProgress(100);
+      setStatusText('Ready');
+
       const exitTimer = setTimeout(() => {
         setPhase('exiting');
-      }, 500);
+      }, 400);
 
       const hideTimer = setTimeout(() => {
         setPhase('hidden');
         if (onFinish) onFinish();
-      }, 1200);
+      }, 900);
 
       return () => {
         clearTimeout(exitTimer);
         clearTimeout(hideTimer);
       };
     }
-  }, [isReady, progress, onFinish]);
+  }, [isLoading, isReady, onFinish]);
+
+  // Hard fail-safe: Ensure splashscreen is NEVER stuck under any circumstance (max 3s)
+  useEffect(() => {
+    const fallbackTimer = setTimeout(() => {
+      setPhase('hidden');
+      if (onFinish) onFinish();
+    }, 3000);
+
+    return () => clearTimeout(fallbackTimer);
+  }, [onFinish]);
 
   if (phase === 'hidden') {
     return null;

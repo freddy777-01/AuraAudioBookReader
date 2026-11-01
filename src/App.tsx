@@ -47,6 +47,11 @@ const AppContent: React.FC = () => {
 
   useEffect(() => {
     refreshLibrary();
+    // Safety fallback to guarantee loading flag never hangs
+    const safetyTimer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 2000);
+    return () => clearTimeout(safetyTimer);
   }, [refreshLibrary]);
 
   // Scan folders
