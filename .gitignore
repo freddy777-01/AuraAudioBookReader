@@ -9,6 +9,7 @@ dist/
 dist-ssr/
 build/
 out/
+dist-installers/
 
 # Rust & Tauri Build Artifacts
 target/
