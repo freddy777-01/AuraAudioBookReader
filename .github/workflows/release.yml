@@ -1,0 +1,59 @@
+name: 'Release Build & Publish'
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    permissions:
+      contents: write
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build Tauri and Publish GitHub Release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseName: 'AuraAudio v__VERSION__'
+          releaseBody: |
+            ### 🎧 AuraAudio v__VERSION__ - Native Desktop Audiobook Reader
+            
+            Welcome to the official release of **AuraAudio**!
+            
+            #### 📦 Windows Downloads
+            - **`AuraAudio___VERSION___x64-setup.exe`**: Modern NSIS Windows Installer (recommended).
+            - **`AuraAudio___VERSION___x64_en-US.msi`**: Windows Installer MSI Package.
+            
+            #### ✨ Highlights
+            - 📚 Automatic multi-part chapter grouping & smart title cleaner
+            - ⏱️ Exact-minute resume and live chapter sequence progress indicators
+            - 🎛️ Pitch-preserving audio engine (0.5x – 3.0x speed)
+            - 🎨 Obsidian Dark & Warm Amber Light themes with full-screen player
+            - 🔒 100% offline, local SQLite storage with zero tracking
+          releaseDraft: false
+          prerelease: false
