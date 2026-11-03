@@ -14,6 +14,7 @@ import {
   BookOpenIcon,
 } from '../common/Icons';
 import { useTheme, ThemeMode } from '../../hooks/useTheme';
+import { tauriBridge } from '../../services/tauriBridge';
 
 interface SettingsViewProps {
   folders: string[];
@@ -55,13 +56,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     try {
       setUpdateStatus('checking');
       setUpdateMsg('Connecting to GitHub releases...');
-      const response = await fetch(
-        'https://api.github.com/repos/freddy777-01/AuraAudioBookReader/releases/latest'
+      const data = await tauriBridge.checkGithubUpdate(
+        'freddy777-01/AuraAudioBookReader'
       );
-      if (!response.ok) {
-        throw new Error(`GitHub responded with status ${response.status}`);
-      }
-      const data = await response.json();
       const latestTag = data.tag_name || '';
 
       if (latestTag && latestTag !== CURRENT_APP_VERSION) {
@@ -81,11 +78,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     }
   };
 
-  const handleInstallUpdate = () => {
-    window.open(
-      'https://github.com/freddy777-01/AuraAudioBookReader/releases/latest',
-      '_blank'
-    );
+  const handleInstallUpdate = async () => {
+    try {
+      await tauriBridge.openExternalUrl(
+        'https://github.com/freddy777-01/AuraAudioBookReader/releases/latest'
+      );
+    } catch {
+      window.open(
+        'https://github.com/freddy777-01/AuraAudioBookReader/releases/latest',
+        '_blank'
+      );
+    }
   };
 
   const THEME_OPTIONS: { id: ThemeMode; label: string; desc: string; icon: React.ReactNode }[] = [

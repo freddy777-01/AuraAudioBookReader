@@ -313,4 +313,25 @@ export const tauriBridge = {
       await invoke('set_always_on_top', { alwaysOnTop });
     }
   },
+
+  checkGithubUpdate: async (repo: string): Promise<any> => {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      return await invoke('check_github_update', { repo });
+    }
+    const res = await fetch(`https://api.github.com/repos/${repo}/releases/latest`, {
+      headers: { Accept: 'application/vnd.github.v3+json' },
+    });
+    if (!res.ok) throw new Error(`Status ${res.status}`);
+    return await res.json();
+  },
+
+  openExternalUrl: async (url: string): Promise<void> => {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('open_external_url', { url });
+      return;
+    }
+    window.open(url, '_blank');
+  },
 };

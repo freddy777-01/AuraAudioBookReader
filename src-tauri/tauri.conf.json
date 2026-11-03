@@ -40,7 +40,7 @@
           "J:/**"
         ]
       },
-      "csp": "default-src 'self' ipc: http://ipc.localhost; img-src 'self' asset: https: data: http://asset.localhost https://asset.localhost; media-src 'self' asset: https: data: http://asset.localhost https://asset.localhost; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;"
+      "csp": "default-src 'self' ipc: http://ipc.localhost; connect-src 'self' ipc: http://ipc.localhost https://api.github.com https://github.com; img-src 'self' asset: https: data: http://asset.localhost https://asset.localhost; media-src 'self' asset: https: data: http://asset.localhost https://asset.localhost; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;"
     }
   },
   "bundle": {
