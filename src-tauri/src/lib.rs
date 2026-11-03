@@ -8,6 +8,8 @@ use tauri::Manager;
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             // Locate app data directory (e.g. C:\Users\<USER>\AppData\Roaming\com.auraaudio.desktop)
             let app_data_dir = app

@@ -33,6 +33,10 @@ src-tauri/WixTools/
 .env.test.local
 .env.production.local
 *.env
+*.key
+*.key.pub
+src-tauri/*.key
+src-tauri/*.key.pub
 
 # Logs & Debugging
 logs/

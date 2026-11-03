@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { check } from '@tauri-apps/plugin-updater';
+import { relaunch } from '@tauri-apps/plugin-process';
 import {
   FolderIcon,
   TrashIcon,
@@ -42,6 +44,72 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [skipInterval, setSkipInterval] = useState<number>(30);
   const [autoRewind, setAutoRewind] = useState<boolean>(true);
   const [pitchCorrection, setPitchCorrection] = useState<boolean>(true);
+
+  // Auto-updater state
+  const [updateStatus, setUpdateStatus] = useState<
+    'idle' | 'checking' | 'available' | 'downloading' | 'up-to-date' | 'error'
+  >('idle');
+  const [newVersion, setNewVersion] = useState<string | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState<number>(0);
+  const [updateMsg, setUpdateMsg] = useState<string>('');
+
+  const handleCheckForUpdates = async () => {
+    try {
+      setUpdateStatus('checking');
+      setUpdateMsg('Connecting to GitHub releases...');
+      const update = await check();
+      if (update) {
+        setNewVersion(update.version);
+        setUpdateStatus('available');
+        setUpdateMsg(`New release v${update.version} is available!`);
+      } else {
+        setUpdateStatus('up-to-date');
+        setUpdateMsg('You are running the latest version of AuraAudio.');
+      }
+    } catch (err: any) {
+      console.warn('Update check error:', err);
+      setUpdateStatus('error');
+      setUpdateMsg(
+        err?.message || 'Could not reach GitHub Releases. Please check your network connection.'
+      );
+    }
+  };
+
+  const handleInstallUpdate = async () => {
+    try {
+      setUpdateStatus('downloading');
+      setDownloadProgress(0);
+      setUpdateMsg('Downloading signed release package...');
+      const update = await check();
+      if (!update) return;
+
+      let totalDownloaded = 0;
+      let totalLength = 0;
+
+      await update.downloadAndInstall((event) => {
+        switch (event.event) {
+          case 'Started':
+            totalLength = event.data.contentLength || 0;
+            break;
+          case 'Progress':
+            totalDownloaded += event.data.chunkLength;
+            if (totalLength > 0) {
+              setDownloadProgress(Math.round((totalDownloaded / totalLength) * 100));
+            }
+            break;
+          case 'Finished':
+            setUpdateMsg('Update installed successfully! Restarting AuraAudio...');
+            break;
+        }
+      });
+
+      await relaunch();
+    } catch (err: any) {
+      console.error('Update installation failed:', err);
+      setUpdateStatus('error');
+      setUpdateMsg('Failed to apply update. You can download the latest setup directly from GitHub.');
+    }
+  };
 
   const THEME_OPTIONS: { id: ThemeMode; label: string; desc: string; icon: React.ReactNode }[] = [
     {
@@ -337,6 +405,68 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <span className="group-hover:translate-x-0.5 transition-transform">→</span>
             </span>
           </div>
+        </div>
+
+        {/* Automatic Updates Panel */}
+        <div className="mt-2 p-4 rounded-xl bg-white dark:bg-aura-900 border border-slate-200 dark:border-aura-800 shadow-sm space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <div className="flex items-center space-x-2">
+                <RefreshIcon
+                  className={`w-4 h-4 text-amber-500 ${updateStatus === 'checking' ? 'animate-spin' : ''}`}
+                />
+                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  Software Updates
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-aura-800 text-slate-600 dark:text-slate-400 font-medium">
+                  Current: v0.1.0
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                {updateMsg || 'Synchronizes releases directly with GitHub. Updates are cryptographically verified.'}
+              </p>
+            </div>
+
+            <div className="flex items-center space-x-2 shrink-0">
+              {updateStatus === 'available' ? (
+                <button
+                  onClick={handleInstallUpdate}
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-xs font-semibold shadow-sm transition-all flex items-center space-x-1.5"
+                >
+                  <SparklesIcon className="w-3.5 h-3.5" />
+                  <span>Install Update {newVersion ? `(v${newVersion})` : ''}</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleCheckForUpdates}
+                  disabled={updateStatus === 'checking' || updateStatus === 'downloading'}
+                  className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-aura-800 hover:bg-slate-200 dark:hover:bg-aura-750 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none flex items-center space-x-1.5 border border-slate-200/80 dark:border-aura-700/80"
+                >
+                  <RefreshIcon
+                    className={`w-3.5 h-3.5 text-amber-500 ${updateStatus === 'checking' ? 'animate-spin' : ''}`}
+                  />
+                  <span>
+                    {updateStatus === 'checking' ? 'Checking GitHub...' : 'Check for Updates'}
+                  </span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {updateStatus === 'downloading' && (
+            <div className="space-y-1.5 pt-1">
+              <div className="flex justify-between text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                <span>Downloading update package...</span>
+                <span>{downloadProgress}%</span>
+              </div>
+              <div className="w-full bg-slate-200 dark:bg-aura-800 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-amber-500 h-1.5 rounded-full transition-all duration-300"
+                  style={{ width: `${downloadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="pt-3 flex flex-wrap items-center justify-between gap-3">
