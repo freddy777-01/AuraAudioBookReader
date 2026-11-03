@@ -82,3 +82,4 @@ pub fn open_external_url(url: String) -> Result<(), String> {
     }
     Ok(())
 }
+
