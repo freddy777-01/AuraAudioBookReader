@@ -307,6 +307,13 @@ export const tauriBridge = {
     }
   },
 
+  setMiniPlayerCompactMode: async (compact: boolean): Promise<void> => {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('set_mini_player_compact_mode', { compact });
+    }
+  },
+
   setAlwaysOnTop: async (alwaysOnTop: boolean): Promise<void> => {
     if (isTauri()) {
       const { invoke } = await import('@tauri-apps/api/core');
