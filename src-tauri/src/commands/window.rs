@@ -42,3 +42,4 @@ pub fn set_always_on_top(window: WebviewWindow, always_on_top: bool) -> Result<(
         .set_always_on_top(always_on_top)
         .map_err(|e| e.to_string())
 }
+
