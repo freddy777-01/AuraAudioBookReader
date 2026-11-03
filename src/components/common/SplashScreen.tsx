@@ -148,7 +148,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
 
       {/* Footer Details: App Version & Powered by FEMAG */}
       <div className="absolute bottom-6 flex flex-col items-center text-center space-y-1 text-xs font-mono select-none">
-        <span className="text-slate-400">v0.2.3</span>
+        <span className="text-slate-400">v0.2.4</span>
         <span className="text-amber-500 font-semibold tracking-wide">Powered by FEMAG</span>
       </div>
     </div>
