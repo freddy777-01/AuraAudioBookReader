@@ -1,6 +1,6 @@
 [package]
 name = "aura-audio"
-version = "0.2.1"
+version = "0.2.2"
 description = "A high-performance, distraction-free local audiobook reader"
 authors = ["AuraAudio Team"]
 edition = "2021"

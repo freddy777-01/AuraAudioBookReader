@@ -85,7 +85,7 @@
   </a>
 </p>
 
-1. Download **`AuraAudio_0.2.1_x64-setup.exe`** from the [Latest Release](https://github.com/freddy777-01/AuraAudioBookReader/releases/latest) page.
+1. Download **`AuraAudio_0.2.2_x64-setup.exe`** from the [Latest Release](https://github.com/freddy777-01/AuraAudioBookReader/releases/latest) page.
 2. Run the installer and launch AuraAudio.
 3. Add your audiobook folders and enjoy listening!
 
