@@ -13,6 +13,7 @@ export interface PlayerState {
   isLoading: boolean;
   error: string | null;
   isFullScreen: boolean;
+  isMiniPlayer: boolean;
   isBookmarksOpen: boolean;
   isChaptersOpen: boolean;
   selectedBookForChapters: Audiobook | null;
@@ -34,6 +35,7 @@ export interface PlayerControls {
   nextChapter: () => Promise<void>;
   previousChapter: () => Promise<void>;
   toggleFullScreen: () => void;
+  toggleMiniPlayer: () => void;
   toggleBookmarks: () => void;
   toggleChapters: (book?: Audiobook | null) => void;
   addBookmark: (title: string, note?: string) => Promise<void>;

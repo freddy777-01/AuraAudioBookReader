@@ -302,3 +302,18 @@ export const ClockIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h
   </svg>
 );
 
+export const MiniPlayerIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="3" width="20" height="18" rx="2" />
+    <rect x="9" y="10" width="11" height="9" rx="1.5" fill="currentColor" fillOpacity="0.25" stroke="currentColor" />
+  </svg>
+);
+
+export const PinIcon: React.FC<{ className?: string; pinned?: boolean }> = ({ className = 'w-5 h-5', pinned = false }) => (
+  <svg className={className} viewBox="0 0 24 24" fill={pinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="17" x2="12" y2="22" />
+    <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.89A4 4 0 0 1 14 9V4h1a1 1 0 0 0 0-2H9a1 1 0 0 0 0 2h1v5a4 4 0 0 1-2.11 3.56l-1.78.89A2 2 0 0 0 5 15.24Z" />
+  </svg>
+);
+
+

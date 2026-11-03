@@ -4,3 +4,4 @@
     RMDir /r "$LOCALAPPDATA\com.auraaudio.desktop"
   skip_delete:
 !macroend
+

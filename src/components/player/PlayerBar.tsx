@@ -9,6 +9,7 @@ import {
   VolumeXIcon,
   BookmarkIcon,
   MaximizeIcon,
+  MiniPlayerIcon,
   ChaptersIcon,
   SkipPrevIcon,
   SkipNextIcon,
@@ -41,6 +42,7 @@ export const PlayerBar: React.FC = () => {
     setVolume,
     toggleMute,
     toggleFullScreen,
+    toggleMiniPlayer,
     toggleBookmarks,
     toggleChapters,
     clearPlayer,
@@ -269,6 +271,15 @@ export const PlayerBar: React.FC = () => {
             className="w-16 h-1 bg-slate-200 dark:bg-aura-800 accent-amber-500 rounded cursor-pointer"
           />
         </div>
+
+        {/* Spotify-style Miniplayer */}
+        <button
+          onClick={toggleMiniPlayer}
+          title="Open Miniplayer (Always on Top)"
+          className="p-2 text-slate-500 dark:text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-aura-850 rounded-lg transition-all"
+        >
+          <MiniPlayerIcon className="w-4 h-4" />
+        </button>
 
         {/* Fullscreen Expand */}
         <button

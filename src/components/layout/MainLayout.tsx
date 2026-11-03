@@ -6,6 +6,7 @@ import { NowPlayingView } from '../views/NowPlayingView';
 import { SettingsView } from '../views/SettingsView';
 import { PlayerBar } from '../player/PlayerBar';
 import { FullScreenPlayer } from '../player/FullScreenPlayer';
+import { MiniPlayer } from '../player/MiniPlayer';
 import { BookmarksDrawer } from '../player/BookmarksDrawer';
 import { ChapterDrawer } from '../player/ChapterDrawer';
 import { AboutModal } from '../common/AboutModal';
@@ -34,7 +35,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 }) => {
   const [currentView, setCurrentView] = useState<ViewMode>('library');
   const [isAboutOpen, setIsAboutOpen] = useState<boolean>(false);
-  const { isFullScreen } = useAudioPlayer();
+  const { isFullScreen, isMiniPlayer } = useAudioPlayer();
+
+  if (isMiniPlayer) {
+    return <MiniPlayer />;
+  }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50 dark:bg-aura-950 text-slate-800 dark:text-slate-100 transition-colors duration-200">

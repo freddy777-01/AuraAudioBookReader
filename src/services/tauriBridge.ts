@@ -299,4 +299,18 @@ export const tauriBridge = {
       mockBookmarks[bookId] = mockBookmarks[bookId].filter((b) => b.id !== bookmarkId);
     });
   },
+
+  setMiniPlayerMode: async (mini: boolean): Promise<void> => {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('set_mini_player_mode', { mini });
+    }
+  },
+
+  setAlwaysOnTop: async (alwaysOnTop: boolean): Promise<void> => {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('set_always_on_top', { alwaysOnTop });
+    }
+  },
 };

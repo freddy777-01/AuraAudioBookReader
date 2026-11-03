@@ -12,7 +12,14 @@ const AppContent: React.FC = () => {
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
   const [showSplash, setShowSplash] = useState<boolean>(true);
-  const { togglePlay, skipForward, skipBackward, clearPlayer } = useAudioPlayer();
+  const {
+    togglePlay,
+    skipForward,
+    skipBackward,
+    clearPlayer,
+    isMiniPlayer,
+    toggleMiniPlayer,
+  } = useAudioPlayer();
 
   // Load initial data from SQLite via Tauri Bridge
   const refreshLibrary = useCallback(async () => {
@@ -127,12 +134,18 @@ const AppContent: React.FC = () => {
       } else if (e.code === 'ArrowLeft') {
         e.preventDefault();
         skipBackward(30);
+      } else if (e.code === 'KeyM' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        toggleMiniPlayer();
+      } else if (e.code === 'Escape' && isMiniPlayer) {
+        e.preventDefault();
+        toggleMiniPlayer();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePlay, skipForward, skipBackward]);
+  }, [togglePlay, skipForward, skipBackward, isMiniPlayer, toggleMiniPlayer]);
 
   const handleSplashFinish = useCallback(() => {
     setShowSplash(false);

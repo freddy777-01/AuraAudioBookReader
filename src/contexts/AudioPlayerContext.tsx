@@ -37,6 +37,7 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
+  const [isMiniPlayer, setIsMiniPlayer] = useState<boolean>(false);
   const [isBookmarksOpen, setIsBookmarksOpen] = useState<boolean>(false);
   const [isChaptersOpen, setIsChaptersOpen] = useState<boolean>(false);
   const [selectedBookForChapters, setSelectedBookForChapters] = useState<Audiobook | null>(null);
@@ -501,6 +502,14 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsFullScreen((prev) => !prev);
   }, []);
 
+  const toggleMiniPlayer = useCallback(() => {
+    setIsMiniPlayer((prev) => {
+      const next = !prev;
+      tauriBridge.setMiniPlayerMode(next);
+      return next;
+    });
+  }, []);
+
   const toggleBookmarks = useCallback(() => {
     setIsBookmarksOpen((prev) => !prev);
   }, []);
@@ -526,6 +535,10 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const clearPlayer = useCallback(() => {
+    if (isMiniPlayer) {
+      setIsMiniPlayer(false);
+      tauriBridge.setMiniPlayerMode(false);
+    }
     // Flush current listening position before closing player bar
     flushPlaybackState();
     const audio = audioRef.current;
@@ -554,6 +567,7 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     isLoading,
     error,
     isFullScreen,
+    isMiniPlayer,
     isBookmarksOpen,
     isChaptersOpen,
     selectedBookForChapters,
@@ -572,6 +586,7 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     nextChapter,
     previousChapter,
     toggleFullScreen,
+    toggleMiniPlayer,
     toggleBookmarks,
     toggleChapters,
     addBookmark,

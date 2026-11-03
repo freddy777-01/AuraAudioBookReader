@@ -49,6 +49,8 @@ pub fn run() {
             commands::playback::create_bookmark,
             commands::playback::get_bookmarks,
             commands::playback::delete_bookmark,
+            commands::window::set_mini_player_mode,
+            commands::window::set_always_on_top,
         ])
         .run(tauri::generate_context!())
         .expect("error while running AuraAudio tauri application");
