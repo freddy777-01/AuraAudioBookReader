@@ -45,12 +45,17 @@
 - **Instant Skip Controls**: Customizable quick forward and backward jumps (default 30 seconds).
 - **Format Compatibility**: Plays `.mp3`, `.m4b` (audiobooks), `.m4a`, `.aac`, `.flac`, and `.ogg` files locally with hardware acceleration.
 
-### 🎨 Stunning Visual Modes
+### 🎨 Stunning Visual Modes & Floating Miniplayer
+- **Spotify-Style Desktop Miniplayer**: Compact floating widget (`360×190`) with **Always-on-Top** pin and draggable window. Listen and control audiobooks while coding, browsing, or working in other apps.
 - **Persistent Player Bar**: Compact bottom bar with volume slider, scrubber, speed picker, chapter toggle, and bookmark drawer.
 - **Immersive Full-Screen Player**: Distraction-free listening view featuring ambient artwork glow, large scrubbers, and responsive controls.
 - **Interactive Chapter Drawer**: Slide-out sequence panel to search, preview, and jump between parts effortlessly.
 - **Interactive Bookmarks**: Capture memorable quotes and timestamps with notes, and jump back anytime.
 - **Theme Support**: Handcrafted **Obsidian Dark** and **Warm Light** modes with smooth animated transitions.
+
+### 🔄 Auto-Updater & Clean Uninstaller
+- **GitHub Releases Auto-Updater**: Built-in cryptographic updater connects directly to GitHub Releases to check, download, and install updates with zero manual reinstallation.
+- **Data Retention Uninstaller**: Uninstaller prompts users whether they wish to preserve their library progress and bookmarks for future reinstallation or perform a 100% clean wipe.
 
 ### 🔒 100% Private & Offline
 - All scan metadata and playback state are stored in a lightweight, local SQLite database on your device.
@@ -65,6 +70,8 @@
 | <kbd>Space</kbd> | Play / Pause |
 | <kbd>→</kbd> (Right Arrow) | Skip Forward (30s) |
 | <kbd>←</kbd> (Left Arrow) | Skip Backward (30s) |
+| <kbd>Ctrl</kbd> + <kbd>M</kbd> | Toggle Floating Miniplayer |
+| <kbd>Esc</kbd> | Exit Miniplayer / Restore Window |
 
 ---
 
@@ -78,7 +85,7 @@
   </a>
 </p>
 
-1. Download **`AuraAudio_0.1.0_x64-setup.exe`** from the [Latest Release](https://github.com/freddy777-01/AuraAudioBookReader/releases/latest) page.
+1. Download **`AuraAudio_0.2.0_x64-setup.exe`** from the [Latest Release](https://github.com/freddy777-01/AuraAudioBookReader/releases/latest) page.
 2. Run the installer and launch AuraAudio.
 3. Add your audiobook folders and enjoy listening!
 

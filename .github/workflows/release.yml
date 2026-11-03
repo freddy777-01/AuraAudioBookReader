@@ -51,6 +51,9 @@ jobs:
             - **`AuraAudio___VERSION___x64_en-US.msi`**: Windows Installer MSI Package.
             
             #### ✨ Highlights
+            - 🪟 **Spotify-Style Desktop Miniplayer**: Floating compact window with Always-on-Top pin, draggable anywhere, and quick controls (Ctrl+M).
+            - 🔄 **GitHub Releases Auto-Updater**: Cryptographically verified updates directly via GitHub Releases.
+            - 🛡️ **Smart Uninstaller**: Option to retain library history & bookmarks for future reinstalls or perform a clean wipe.
             - 📚 Automatic multi-part chapter grouping & smart title cleaner
             - ⏱️ Exact-minute resume and live chapter sequence progress indicators
             - 🎛️ Pitch-preserving audio engine (0.5x – 3.0x speed)

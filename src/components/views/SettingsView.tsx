@@ -394,7 +394,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <span>About AuraAudio</span>
               </span>
               <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300 font-semibold">
-                v0.1.0
+                v0.2.0
               </span>
             </div>
             <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 group-hover:text-amber-500 transition-colors">
@@ -419,7 +419,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   Software Updates
                 </span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-aura-800 text-slate-600 dark:text-slate-400 font-medium">
-                  Current: v0.1.0
+                  Current: v0.2.0
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
