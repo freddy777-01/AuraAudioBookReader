@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import { check } from '@tauri-apps/plugin-updater';
-import { relaunch } from '@tauri-apps/plugin-process';
 import {
   FolderIcon,
   TrashIcon,
@@ -46,69 +44,48 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [pitchCorrection, setPitchCorrection] = useState<boolean>(true);
 
   // Auto-updater state
+  const CURRENT_APP_VERSION = 'v0.2.1';
   const [updateStatus, setUpdateStatus] = useState<
     'idle' | 'checking' | 'available' | 'downloading' | 'up-to-date' | 'error'
   >('idle');
   const [newVersion, setNewVersion] = useState<string | null>(null);
-  const [downloadProgress, setDownloadProgress] = useState<number>(0);
   const [updateMsg, setUpdateMsg] = useState<string>('');
 
   const handleCheckForUpdates = async () => {
     try {
       setUpdateStatus('checking');
       setUpdateMsg('Connecting to GitHub releases...');
-      const update = await check();
-      if (update) {
-        setNewVersion(update.version);
+      const response = await fetch(
+        'https://api.github.com/repos/freddy777-01/AuraAudioBookReader/releases/latest'
+      );
+      if (!response.ok) {
+        throw new Error(`GitHub responded with status ${response.status}`);
+      }
+      const data = await response.json();
+      const latestTag = data.tag_name || '';
+
+      if (latestTag && latestTag !== CURRENT_APP_VERSION) {
+        setNewVersion(latestTag.replace(/^v/, ''));
         setUpdateStatus('available');
-        setUpdateMsg(`New release v${update.version} is available!`);
+        setUpdateMsg(`New release ${latestTag} is available! Click below to download and update.`);
       } else {
         setUpdateStatus('up-to-date');
-        setUpdateMsg('You are running the latest version of AuraAudio.');
+        setUpdateMsg(`You are running the latest version (${CURRENT_APP_VERSION}).`);
       }
     } catch (err: any) {
       console.warn('Update check error:', err);
       setUpdateStatus('error');
       setUpdateMsg(
-        err?.message || 'Could not reach GitHub Releases. Please check your network connection.'
+        'Could not reach GitHub Releases. Please check your network connection.'
       );
     }
   };
 
-  const handleInstallUpdate = async () => {
-    try {
-      setUpdateStatus('downloading');
-      setDownloadProgress(0);
-      setUpdateMsg('Downloading signed release package...');
-      const update = await check();
-      if (!update) return;
-
-      let totalDownloaded = 0;
-      let totalLength = 0;
-
-      await update.downloadAndInstall((event) => {
-        switch (event.event) {
-          case 'Started':
-            totalLength = event.data.contentLength || 0;
-            break;
-          case 'Progress':
-            totalDownloaded += event.data.chunkLength;
-            if (totalLength > 0) {
-              setDownloadProgress(Math.round((totalDownloaded / totalLength) * 100));
-            }
-            break;
-          case 'Finished':
-            setUpdateMsg('Update installed successfully! Restarting AuraAudio...');
-            break;
-        }
-      });
-
-      await relaunch();
-    } catch (err: any) {
-      console.error('Update installation failed:', err);
-      setUpdateStatus('error');
-      setUpdateMsg('Failed to apply update. You can download the latest setup directly from GitHub.');
-    }
+  const handleInstallUpdate = () => {
+    window.open(
+      'https://github.com/freddy777-01/AuraAudioBookReader/releases/latest',
+      '_blank'
+    );
   };
 
   const THEME_OPTIONS: { id: ThemeMode; label: string; desc: string; icon: React.ReactNode }[] = [
@@ -394,7 +371,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <span>About AuraAudio</span>
               </span>
               <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300 font-semibold">
-                v0.2.0
+                v0.2.1
               </span>
             </div>
             <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 group-hover:text-amber-500 transition-colors">
@@ -419,11 +396,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   Software Updates
                 </span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-aura-800 text-slate-600 dark:text-slate-400 font-medium">
-                  Current: v0.2.0
+                  Current: v0.2.1
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                {updateMsg || 'Synchronizes releases directly with GitHub. Updates are cryptographically verified.'}
+                {updateMsg || 'Checks directly with GitHub Releases for new updates.'}
               </p>
             </div>
 
@@ -434,12 +411,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-xs font-semibold shadow-sm transition-all flex items-center space-x-1.5"
                 >
                   <SparklesIcon className="w-3.5 h-3.5" />
-                  <span>Install Update {newVersion ? `(v${newVersion})` : ''}</span>
+                  <span>Download & Upgrade {newVersion ? `(v${newVersion})` : ''}</span>
                 </button>
               ) : (
                 <button
                   onClick={handleCheckForUpdates}
-                  disabled={updateStatus === 'checking' || updateStatus === 'downloading'}
+                  disabled={updateStatus === 'checking'}
                   className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-aura-800 hover:bg-slate-200 dark:hover:bg-aura-750 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none flex items-center space-x-1.5 border border-slate-200/80 dark:border-aura-700/80"
                 >
                   <RefreshIcon
@@ -452,21 +429,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               )}
             </div>
           </div>
-
-          {updateStatus === 'downloading' && (
-            <div className="space-y-1.5 pt-1">
-              <div className="flex justify-between text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-                <span>Downloading update package...</span>
-                <span>{downloadProgress}%</span>
-              </div>
-              <div className="w-full bg-slate-200 dark:bg-aura-800 rounded-full h-1.5 overflow-hidden">
-                <div
-                  className="bg-amber-500 h-1.5 rounded-full transition-all duration-300"
-                  style={{ width: `${downloadProgress}%` }}
-                />
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="pt-3 flex flex-wrap items-center justify-between gap-3">

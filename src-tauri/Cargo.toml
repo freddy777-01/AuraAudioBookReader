@@ -1,6 +1,6 @@
 [package]
 name = "aura-audio"
-version = "0.2.0"
+version = "0.2.1"
 description = "A high-performance, distraction-free local audiobook reader"
 authors = ["AuraAudio Team"]
 edition = "2021"
@@ -15,7 +15,6 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = ["protocol-asset"] }
 tauri-plugin-dialog = "2"
-tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

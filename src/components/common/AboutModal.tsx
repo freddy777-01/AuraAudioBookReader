@@ -67,7 +67,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
             <div>
               <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[11px] font-mono font-medium mb-1 border border-amber-500/20">
                 <SparklesIcon className="w-3 h-3 text-amber-500" />
-                <span>v0.2.0 • Native Reader</span>
+                <span>v0.2.1 • Native Reader</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 dark:text-white tracking-tight">
                 Aura<span className="text-amber-500">Audio</span>
