@@ -3,14 +3,17 @@ use tauri::{LogicalSize, WebviewWindow};
 #[tauri::command]
 pub fn set_mini_player_mode(window: WebviewWindow, mini: bool) -> Result<(), String> {
     if mini {
-        // Allow the window to shrink below standard minimum desktop size down to compact bar
+        // On entering mini player, start in the sleek frameless slim strip without OS title bar
         window
-            .set_min_size(Some(LogicalSize::new(280.0, 72.0)))
+            .set_decorations(false)
             .map_err(|e| e.to_string())?;
 
-        // Resize down to default mini player card size (accounting for Windows title bar)
         window
-            .set_size(LogicalSize::new(360.0, 220.0))
+            .set_min_size(Some(LogicalSize::new(280.0, 50.0)))
+            .map_err(|e| e.to_string())?;
+
+        window
+            .set_size(LogicalSize::new(390.0, 56.0))
             .map_err(|e| e.to_string())?;
 
         // Float on top of other desktop windows
@@ -18,6 +21,11 @@ pub fn set_mini_player_mode(window: WebviewWindow, mini: bool) -> Result<(), Str
             .set_always_on_top(true)
             .map_err(|e| e.to_string())?;
     } else {
+        // Restore standard window decorations (minimize, maximize, close)
+        window
+            .set_decorations(true)
+            .map_err(|e| e.to_string())?;
+
         // Disable floating on top
         window
             .set_always_on_top(false)
@@ -39,17 +47,38 @@ pub fn set_mini_player_mode(window: WebviewWindow, mini: bool) -> Result<(), Str
 #[tauri::command]
 pub fn set_mini_player_compact_mode(window: WebviewWindow, compact: bool) -> Result<(), String> {
     if compact {
-        // Shrink to Spotify-style slim horizontal strip / pill bar
+        // Remove OS title bar for frameless floating widget
         window
-            .set_size(LogicalSize::new(380.0, 84.0))
+            .set_decorations(false)
+            .map_err(|e| e.to_string())?;
+
+        window
+            .set_min_size(Some(LogicalSize::new(280.0, 50.0)))
+            .map_err(|e| e.to_string())?;
+
+        window
+            .set_size(LogicalSize::new(390.0, 56.0))
             .map_err(|e| e.to_string())?;
     } else {
-        // Expand to standard card mini player
+        // Restore title bar for card view
+        window
+            .set_decorations(true)
+            .map_err(|e| e.to_string())?;
+
+        window
+            .set_min_size(Some(LogicalSize::new(320.0, 180.0)))
+            .map_err(|e| e.to_string())?;
+
         window
             .set_size(LogicalSize::new(360.0, 220.0))
             .map_err(|e| e.to_string())?;
     }
     Ok(())
+}
+
+#[tauri::command]
+pub fn start_dragging(window: WebviewWindow) -> Result<(), String> {
+    window.start_dragging().map_err(|e| e.to_string())
 }
 
 #[tauri::command]

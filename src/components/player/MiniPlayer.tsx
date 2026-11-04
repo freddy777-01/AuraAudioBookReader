@@ -8,13 +8,13 @@ import {
   SkipForward30Icon,
   MaximizeIcon,
   PinIcon,
-  SkipPrevIcon,
-  SkipNextIcon,
   CloseIcon,
   GripIcon,
   CheckCircleIcon,
   StripModeIcon,
   CardModeIcon,
+  SkipPrevIcon,
+  SkipNextIcon,
 } from '../common/Icons';
 
 export const MiniPlayer: React.FC = () => {
@@ -42,9 +42,10 @@ export const MiniPlayer: React.FC = () => {
 
   const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(true);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
-  const [isCompact, setIsCompact] = useState(false);
+  // Default to slim horizontal strip mode on launch
+  const [isCompact, setIsCompact] = useState(true);
   const [windowHeight, setWindowHeight] = useState(
-    typeof window !== 'undefined' ? window.innerHeight : 220
+    typeof window !== 'undefined' ? window.innerHeight : 56
   );
   const [bookmarkedRecently, setBookmarkedRecently] = useState(false);
 
@@ -74,6 +75,11 @@ export const MiniPlayer: React.FC = () => {
     await tauriBridge.setMiniPlayerCompactMode(nextCompact);
   };
 
+  const handleCloseMiniPlayer = async () => {
+    await tauriBridge.setMiniPlayerMode(false);
+    toggleMiniPlayer();
+  };
+
   const handleScrub = (e: React.MouseEvent<HTMLDivElement>) => {
     if (duration <= 0) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -93,15 +99,23 @@ export const MiniPlayer: React.FC = () => {
     }
   };
 
+  const handleStartDrag = (e: React.MouseEvent) => {
+    if (e.button === 0) {
+      e.preventDefault();
+      tauriBridge.startDragging();
+    }
+  };
+
   if (!currentBook) {
     return (
       <div
         data-tauri-drag-region
+        onMouseDown={handleStartDrag}
         className="h-screen w-screen bg-white dark:bg-aura-950 text-slate-800 dark:text-slate-200 flex flex-col items-center justify-center p-4 select-none cursor-move transition-colors duration-200"
       >
         <span className="text-xs text-slate-500 dark:text-slate-400">No audiobook active</span>
         <button
-          onClick={toggleMiniPlayer}
+          onClick={handleCloseMiniPlayer}
           className="mt-2 px-3 py-1 bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-medium hover:bg-amber-500/25 dark:hover:bg-amber-500/30 transition-colors"
         >
           Open AuraAudio
@@ -111,26 +125,33 @@ export const MiniPlayer: React.FC = () => {
   }
 
   // -------------------------------------------------------------
-  // 1. SLIM HORIZONTAL STRIP / PILL VIEW (Spotify style - Image 1)
+  // 1. SLIM HORIZONTAL STRIP VIEW (Frameless Floating Player - Image 1)
   // -------------------------------------------------------------
   if (effectiveCompact) {
     return (
       <div
         data-tauri-drag-region
-        className="h-screen w-screen bg-white dark:bg-aura-950 text-slate-900 dark:text-slate-100 flex items-center justify-between px-2.5 py-1 select-none overflow-hidden relative border border-slate-200/90 dark:border-aura-800/90 shadow-2xl cursor-move transition-colors duration-200"
+        className="h-screen w-screen bg-white dark:bg-aura-950 text-slate-900 dark:text-slate-100 flex items-center justify-between px-2.5 py-1 select-none overflow-hidden relative border border-slate-200/90 dark:border-aura-800/90 shadow-2xl transition-colors duration-200 rounded-lg"
       >
         {/* Left: Close/Drag & Artwork & Title */}
-        <div data-tauri-drag-region className="flex items-center space-x-2 min-w-0 flex-1 mr-2 cursor-move">
-          {/* Close mini player / return to full app */}
+        <div data-tauri-drag-region className="flex items-center space-x-2 min-w-0 flex-1 mr-2">
+          {/* Close mini player / return to full app & 6-dot drag grip */}
           <div className="flex flex-col items-center justify-center space-y-0.5 shrink-0">
             <button
-              onClick={toggleMiniPlayer}
+              onClick={handleCloseMiniPlayer}
               title="Close mini player (Return to AuraAudio)"
               className="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors p-0.5 rounded hover:bg-slate-100 dark:hover:bg-aura-800"
             >
               <CloseIcon className="w-3.5 h-3.5" />
             </button>
-            <GripIcon className="w-3.5 h-3.5 text-slate-400 dark:text-slate-600 cursor-move" />
+            <div
+              data-tauri-drag-region
+              onMouseDown={handleStartDrag}
+              title="Click and drag to move mini player across screen"
+              className="cursor-grab active:cursor-grabbing p-0.5 rounded hover:bg-slate-100 dark:hover:bg-aura-800 text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 transition-colors"
+            >
+              <GripIcon className="w-3.5 h-3.5 pointer-events-none" />
+            </div>
           </div>
 
           {/* Artwork Thumbnail */}
@@ -153,7 +174,11 @@ export const MiniPlayer: React.FC = () => {
           </div>
 
           {/* Track Details */}
-          <div data-tauri-drag-region className="min-w-0 flex-1 cursor-move pr-1">
+          <div
+            data-tauri-drag-region
+            onMouseDown={handleStartDrag}
+            className="min-w-0 flex-1 cursor-grab active:cursor-grabbing pr-1"
+          >
             <h4
               className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate leading-tight"
               title={currentBook.title}
@@ -174,8 +199,8 @@ export const MiniPlayer: React.FC = () => {
         {/* Subtle Vertical Divider */}
         <div className="h-5 w-[1px] bg-slate-200 dark:bg-aura-800 shrink-0 mx-1" />
 
-        {/* Right: Quick Bookmark, Controls, Always-on-Top, Card Mode */}
-        <div className="flex items-center space-x-1.5 shrink-0">
+        {/* Right: Quick Bookmark, Forward/Rewind 30s Controls, Always-on-Top, Card Mode */}
+        <div className="flex items-center space-x-1 shrink-0">
           {/* Quick Bookmark (Green Checkmark like Spotify!) */}
           <button
             onClick={handleQuickBookmark}
@@ -189,16 +214,16 @@ export const MiniPlayer: React.FC = () => {
             <CheckCircleIcon className="w-4 h-4" />
           </button>
 
-          {/* Rewind 30s or Previous Chapter */}
+          {/* Rewind 30s Button (Replaced chapter prev) */}
           <button
-            onClick={currentBook.is_multi_track ? previousChapter : () => skipBackward(30)}
-            className="p-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-aura-800 rounded transition-colors"
-            title={currentBook.is_multi_track ? 'Previous Chapter' : 'Rewind 30s'}
+            onClick={() => skipBackward(30)}
+            className="p-1 text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-aura-800 rounded transition-colors"
+            title="Rewind 30s"
           >
-            <SkipPrevIcon className="w-4 h-4" />
+            <SkipBack30Icon className="w-4 h-4" />
           </button>
 
-          {/* High-Contrast Play / Pause Button (Clean dark in light mode, crisp white in dark mode) */}
+          {/* High-Contrast Play / Pause Button */}
           <button
             onClick={togglePlay}
             className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-200 dark:text-slate-950 shadow-md active:scale-95 transition-all flex items-center justify-center font-bold"
@@ -211,13 +236,13 @@ export const MiniPlayer: React.FC = () => {
             )}
           </button>
 
-          {/* Fast Forward 30s or Next Chapter */}
+          {/* Fast Forward 30s Button (Replaced chapter next) */}
           <button
-            onClick={currentBook.is_multi_track ? nextChapter : () => skipForward(30)}
-            className="p-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-aura-800 rounded transition-colors"
-            title={currentBook.is_multi_track ? 'Next Chapter' : 'Fast Forward 30s'}
+            onClick={() => skipForward(30)}
+            className="p-1 text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-aura-800 rounded transition-colors"
+            title="Fast Forward 30s"
           >
-            <SkipNextIcon className="w-4 h-4" />
+            <SkipForward30Icon className="w-4 h-4" />
           </button>
 
           {/* Always on top pin */}
@@ -266,6 +291,7 @@ export const MiniPlayer: React.FC = () => {
       {/* Top Drag Bar & Action Controls */}
       <div
         data-tauri-drag-region
+        onMouseDown={handleStartDrag}
         className="flex items-center justify-between cursor-move pb-1 shrink-0"
       >
         <div data-tauri-drag-region className="flex items-center space-x-1.5 min-w-0">
@@ -300,7 +326,7 @@ export const MiniPlayer: React.FC = () => {
 
           {/* Expand to Main Desktop Window */}
           <button
-            onClick={toggleMiniPlayer}
+            onClick={handleCloseMiniPlayer}
             title="Expand to Full Application"
             className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-aura-800 transition-colors"
           >
@@ -310,7 +336,11 @@ export const MiniPlayer: React.FC = () => {
       </div>
 
       {/* Middle: Audiobook Metadata & Cover Art */}
-      <div data-tauri-drag-region className="flex items-center space-x-2.5 my-auto py-1 min-h-0 flex-1 cursor-move">
+      <div
+        data-tauri-drag-region
+        onMouseDown={handleStartDrag}
+        className="flex items-center space-x-2.5 my-auto py-1 min-h-0 flex-1 cursor-move"
+      >
         {/* Thumbnail Artwork */}
         <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-lg overflow-hidden shrink-0 bg-slate-100 dark:bg-aura-900 border border-slate-200 dark:border-aura-800 shadow-sm">
           {currentBook.cover_image ? (

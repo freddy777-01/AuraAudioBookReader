@@ -50,6 +50,7 @@ pub fn run() {
             commands::playback::delete_bookmark,
             commands::window::set_mini_player_mode,
             commands::window::set_mini_player_compact_mode,
+            commands::window::start_dragging,
             commands::window::set_always_on_top,
             commands::updater::check_github_update,
             commands::updater::open_external_url,

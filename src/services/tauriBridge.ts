@@ -314,6 +314,13 @@ export const tauriBridge = {
     }
   },
 
+  startDragging: async (): Promise<void> => {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('start_dragging');
+    }
+  },
+
   setAlwaysOnTop: async (alwaysOnTop: boolean): Promise<void> => {
     if (isTauri()) {
       const { invoke } = await import('@tauri-apps/api/core');
