@@ -19,6 +19,7 @@ const AppContent: React.FC = () => {
     clearPlayer,
     isMiniPlayer,
     toggleMiniPlayer,
+    closeMiniPlayer,
   } = useAudioPlayer();
 
   // Load initial data from SQLite via Tauri Bridge
@@ -139,13 +140,13 @@ const AppContent: React.FC = () => {
         toggleMiniPlayer();
       } else if (e.code === 'Escape' && isMiniPlayer) {
         e.preventDefault();
-        toggleMiniPlayer();
+        closeMiniPlayer();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePlay, skipForward, skipBackward, isMiniPlayer, toggleMiniPlayer]);
+  }, [togglePlay, skipForward, skipBackward, isMiniPlayer, toggleMiniPlayer, closeMiniPlayer]);
 
   const handleSplashFinish = useCallback(() => {
     setShowSplash(false);

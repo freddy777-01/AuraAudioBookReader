@@ -64,20 +64,49 @@ export const MiniPlayer: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleTogglePin = async () => {
+  const handleTogglePin = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     const next = !isAlwaysOnTop;
     setIsAlwaysOnTop(next);
-    await tauriBridge.setAlwaysOnTop(next);
+    try {
+      await tauriBridge.setAlwaysOnTop(next);
+    } catch (err) {
+      console.error('Failed to toggle pin always-on-top:', err);
+    }
   };
 
-  const handleToggleCompact = async () => {
+  const handleSetSlimMode = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     isTogglingRef.current = true;
-    const nextCompact = !isCompact;
-    setIsCompact(nextCompact);
+    setIsCompact(true);
     try {
-      await tauriBridge.setMiniPlayerCompactMode(nextCompact);
+      await tauriBridge.setMiniPlayerCompactMode(true);
     } catch (err) {
-      console.error('Failed to toggle mini player compact mode:', err);
+      console.error('Failed to set slim mode:', err);
+    } finally {
+      setTimeout(() => {
+        isTogglingRef.current = false;
+      }, 400);
+    }
+  };
+
+  const handleSetCardMode = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    isTogglingRef.current = true;
+    setIsCompact(false);
+    try {
+      await tauriBridge.setMiniPlayerCompactMode(false);
+    } catch (err) {
+      console.error('Failed to set card mode:', err);
     } finally {
       setTimeout(() => {
         isTogglingRef.current = false;
@@ -86,7 +115,11 @@ export const MiniPlayer: React.FC = () => {
   };
 
   // Expand to full application
-  const handleExpandToFullApp = () => {
+  const handleExpandToFullApp = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     closeMiniPlayer();
   };
 
@@ -98,7 +131,11 @@ export const MiniPlayer: React.FC = () => {
     seek(percentage * duration);
   };
 
-  const handleQuickBookmark = async () => {
+  const handleQuickBookmark = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (!currentBook) return;
     try {
       await addBookmark(`Bookmark at ${formattedCurrentTime}`);
@@ -109,11 +146,28 @@ export const MiniPlayer: React.FC = () => {
     }
   };
 
+  const handleDragGrip = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    tauriBridge.startDragging();
+  };
+
   const handleStartDrag = (e: React.MouseEvent) => {
-    if (e.button === 0) {
-      e.preventDefault();
-      tauriBridge.startDragging();
+    if (e.button !== 0) return;
+    const target = e.target as HTMLElement | null;
+    if (
+      target &&
+      (target.closest('button') ||
+       target.closest('input') ||
+       target.closest('select') ||
+       target.closest('[data-no-drag="true"]') ||
+       target.closest('[data-tauri-drag-region="false"]'))
+    ) {
+      return;
     }
+    e.preventDefault();
+    tauriBridge.startDragging();
   };
 
   if (!currentBook) {
@@ -141,62 +195,70 @@ export const MiniPlayer: React.FC = () => {
     return (
       <div
         data-tauri-drag-region
-        className="h-screen w-screen bg-white dark:bg-aura-950 text-slate-900 dark:text-slate-100 flex items-center justify-between px-2.5 py-1 select-none overflow-hidden relative border border-slate-200/90 dark:border-aura-800/90 shadow-2xl transition-colors duration-200 rounded-lg"
+        onMouseDown={handleStartDrag}
+        className="h-screen w-screen bg-white dark:bg-aura-950 text-slate-900 dark:text-slate-100 flex items-center justify-between px-2.5 py-1 select-none overflow-hidden relative border border-slate-200/90 dark:border-aura-800/90 shadow-2xl transition-colors duration-200 rounded-lg cursor-grab active:cursor-grabbing"
       >
         {/* Left: Close/Drag & Artwork & Title */}
-        <div data-tauri-drag-region className="flex items-center space-x-2 min-w-0 flex-1 mr-2">
-          {/* Close mini player / return to full app & 6-dot drag grip */}
-          <div className="flex flex-col items-center justify-center space-y-0.5 shrink-0">
+        <div className="flex items-center space-x-2 min-w-0 flex-1 mr-2 pointer-events-auto">
+          {/* Close mini player button & 6-dot drag grip handle */}
+          <div className="flex flex-col items-center justify-center space-y-0.5 shrink-0 z-20">
             <button
+              type="button"
+              data-tauri-drag-region="false"
+              data-no-drag="true"
+              onMouseDown={(e) => e.stopPropagation()}
               onClick={handleExpandToFullApp}
               title="Close mini player (Return to AuraAudio)"
-              className="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors p-0.5 rounded hover:bg-slate-100 dark:hover:bg-aura-800"
+              className="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors p-0.5 rounded hover:bg-slate-100 dark:hover:bg-aura-800 cursor-pointer"
             >
-              <CloseIcon className="w-3.5 h-3.5" />
+              <CloseIcon className="w-3.5 h-3.5 pointer-events-none" />
             </button>
             <div
               data-tauri-drag-region
-              onMouseDown={handleStartDrag}
+              onMouseDown={handleDragGrip}
               title="Click and drag to move mini player across screen"
-              className="cursor-grab active:cursor-grabbing p-0.5 rounded hover:bg-slate-100 dark:hover:bg-aura-800 text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 transition-colors"
+              className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-slate-100 dark:hover:bg-aura-800 text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 transition-colors select-none"
             >
               <GripIcon className="w-3.5 h-3.5 pointer-events-none" />
             </div>
           </div>
 
-          {/* Artwork Thumbnail */}
+          {/* Artwork Thumbnail (Click to switch to card view) */}
           <div
-            onClick={handleToggleCompact}
+            data-tauri-drag-region="false"
+            data-no-drag="true"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={handleSetCardMode}
             title="Click to expand to card view"
-            className="w-9 h-9 rounded-md overflow-hidden shrink-0 bg-slate-100 dark:bg-aura-900 border border-slate-200 dark:border-aura-800 shadow cursor-pointer hover:border-amber-500/60 transition-colors"
+            className="w-9 h-9 rounded-md overflow-hidden shrink-0 bg-slate-100 dark:bg-aura-900 border border-slate-200 dark:border-aura-800 shadow cursor-pointer hover:border-amber-500/60 transition-colors z-10"
           >
             {currentBook.cover_image ? (
               <img
                 src={currentBook.cover_image}
                 alt={currentBook.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover pointer-events-none"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-600 to-amber-400 text-white font-serif font-bold text-xs">
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-600 to-amber-400 text-white font-serif font-bold text-xs pointer-events-none">
                 {currentBook.title.charAt(0)}
               </div>
             )}
           </div>
 
-          {/* Track Details */}
+          {/* Track Details (Click & drag to move window) */}
           <div
             data-tauri-drag-region
             onMouseDown={handleStartDrag}
             className="min-w-0 flex-1 cursor-grab active:cursor-grabbing pr-1"
           >
             <h4
-              className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate leading-tight"
+              className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate leading-tight pointer-events-none"
               title={currentBook.title}
             >
               {currentBook.title}
             </h4>
             <p
-              className="text-[10px] text-slate-500 dark:text-slate-400 truncate leading-tight mt-0.5"
+              className="text-[10px] text-slate-500 dark:text-slate-400 truncate leading-tight mt-0.5 pointer-events-none"
               title={currentTrackTitle || currentBook.author || ''}
             >
               {currentBook.is_multi_track && currentTrackTitle
@@ -207,82 +269,108 @@ export const MiniPlayer: React.FC = () => {
         </div>
 
         {/* Subtle Vertical Divider */}
-        <div className="h-5 w-[1px] bg-slate-200 dark:bg-aura-800 shrink-0 mx-1" />
+        <div className="h-5 w-[1px] bg-slate-200 dark:bg-aura-800 shrink-0 mx-1 pointer-events-none" />
 
         {/* Right: Quick Bookmark, Forward/Rewind 30s Controls, Always-on-Top, Card Mode */}
-        <div className="flex items-center space-x-1 shrink-0">
+        <div
+          data-tauri-drag-region="false"
+          data-no-drag="true"
+          onMouseDown={(e) => e.stopPropagation()}
+          className="flex items-center space-x-1 shrink-0 z-20"
+        >
           {/* Quick Bookmark (Green Checkmark like Spotify!) */}
           <button
+            type="button"
+            data-tauri-drag-region="false"
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={handleQuickBookmark}
             title={bookmarkedRecently ? 'Bookmark saved!' : 'Save quick bookmark'}
-            className={`p-1 rounded-full transition-all ${
+            className={`p-1 rounded-full transition-all cursor-pointer ${
               bookmarkedRecently
                 ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/15 dark:bg-emerald-500/20 scale-105'
                 : 'text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-aura-850'
             }`}
           >
-            <CheckCircleIcon className="w-4 h-4" />
+            <CheckCircleIcon className="w-4 h-4 pointer-events-none" />
           </button>
 
           {/* Rewind 30s Button */}
           <button
+            type="button"
+            data-tauri-drag-region="false"
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={() => skipBackward(30)}
-            className="p-1 text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-aura-800 rounded transition-colors"
+            className="p-1 text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-aura-800 rounded transition-colors cursor-pointer"
             title="Rewind 30s"
           >
-            <SkipBack30Icon className="w-4 h-4" />
+            <SkipBack30Icon className="w-4 h-4 pointer-events-none" />
           </button>
 
           {/* High-Contrast Play / Pause Button */}
           <button
+            type="button"
+            data-tauri-drag-region="false"
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={togglePlay}
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-200 dark:text-slate-950 shadow-md active:scale-95 transition-all flex items-center justify-center font-bold"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-200 dark:text-slate-950 shadow-md active:scale-95 transition-all flex items-center justify-center font-bold cursor-pointer"
             title={isPlaying ? 'Pause' : 'Play'}
           >
             {isPlaying ? (
-              <PauseIcon className="w-3.5 h-3.5" />
+              <PauseIcon className="w-3.5 h-3.5 pointer-events-none" />
             ) : (
-              <PlayIcon className="w-3.5 h-3.5 ml-0.5" />
+              <PlayIcon className="w-3.5 h-3.5 ml-0.5 pointer-events-none" />
             )}
           </button>
 
           {/* Fast Forward 30s Button */}
           <button
+            type="button"
+            data-tauri-drag-region="false"
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={() => skipForward(30)}
-            className="p-1 text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-aura-800 rounded transition-colors"
+            className="p-1 text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-aura-800 rounded transition-colors cursor-pointer"
             title="Fast Forward 30s"
           >
-            <SkipForward30Icon className="w-4 h-4" />
+            <SkipForward30Icon className="w-4 h-4 pointer-events-none" />
           </button>
 
           {/* Always on top pin */}
           <button
+            type="button"
+            data-tauri-drag-region="false"
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={handleTogglePin}
             title={isAlwaysOnTop ? 'Always on Top: Active' : 'Always on Top: Inactive'}
-            className={`p-1 rounded-md transition-colors ${
+            className={`p-1 rounded-md transition-colors cursor-pointer ${
               isAlwaysOnTop
                 ? 'text-amber-600 dark:text-amber-400 bg-amber-500/15'
                 : 'text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-aura-800'
             }`}
           >
-            <PinIcon className="w-3.5 h-3.5" pinned={isAlwaysOnTop} />
+            <PinIcon className="w-3.5 h-3.5 pointer-events-none" pinned={isAlwaysOnTop} />
           </button>
 
           {/* Switch to Card Mode */}
           <button
-            onClick={handleToggleCompact}
+            type="button"
+            data-tauri-drag-region="false"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={handleSetCardMode}
             title="Expand to Card View"
-            className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-aura-800 transition-colors"
+            className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-aura-800 transition-colors cursor-pointer"
           >
-            <CardModeIcon className="w-3.5 h-3.5" />
+            <CardModeIcon className="w-3.5 h-3.5 pointer-events-none" />
           </button>
         </div>
 
         {/* Hairline Interactive Scrubber along bottom edge */}
         <div
+          data-tauri-drag-region="false"
+          data-no-drag="true"
+          onMouseDown={(e) => e.stopPropagation()}
           onClick={handleScrub}
           title={`Progress: ${formattedCurrentTime} / ${formattedDuration} (${Math.round(progressPercentage)}%)`}
-          className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-slate-200 dark:bg-aura-850 hover:h-1 cursor-pointer transition-all"
+          className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-slate-200 dark:bg-aura-850 hover:h-1 cursor-pointer transition-all z-20"
         >
           <div
             className="h-full bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400 transition-all duration-100"
@@ -297,59 +385,84 @@ export const MiniPlayer: React.FC = () => {
   // 2. CARD VIEW (Frameless, clean floating card without OS bar)
   // -------------------------------------------------------------
   return (
-    <div className="h-screen w-screen bg-white dark:bg-aura-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between p-2.5 sm:p-3 select-none overflow-hidden border border-slate-200/90 dark:border-aura-800/80 shadow-2xl relative transition-colors duration-200 rounded-xl">
+    <div
+      data-tauri-drag-region
+      onMouseDown={handleStartDrag}
+      className="h-screen w-screen bg-white dark:bg-aura-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between p-2.5 sm:p-3 select-none overflow-hidden border border-slate-200/90 dark:border-aura-800/80 shadow-2xl relative transition-colors duration-200 rounded-xl cursor-grab active:cursor-grabbing"
+    >
       {/* Top Header Bar */}
-      <div
-        data-tauri-drag-region
-        onMouseDown={handleStartDrag}
-        className="flex items-center justify-between cursor-grab active:cursor-grabbing pb-1 shrink-0"
-      >
-        <div data-tauri-drag-region className="flex items-center space-x-1.5 min-w-0">
-          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-          <span className="text-[10px] uppercase font-bold tracking-wider text-amber-600 dark:text-amber-500/90 font-mono truncate">
+      <div className="flex items-center justify-between pb-1 shrink-0 select-none">
+        {/* Left: Drag Handle & Title */}
+        <div
+          data-tauri-drag-region
+          onMouseDown={handleDragGrip}
+          title="Click and drag to move mini player across screen"
+          className="flex items-center space-x-1.5 min-w-0 cursor-grab active:cursor-grabbing flex-1 py-1"
+        >
+          <GripIcon className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 pointer-events-none" />
+          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse pointer-events-none" />
+          <span className="text-[10px] uppercase font-bold tracking-wider text-amber-600 dark:text-amber-500/90 font-mono truncate pointer-events-none">
             AuraAudio Mini
           </span>
         </div>
 
-        <div className="flex items-center space-x-1 shrink-0">
+        {/* Right: Actions Container - strictly non-draggable & isolated from mouse gestures */}
+        <div
+          data-tauri-drag-region="false"
+          data-no-drag="true"
+          onMouseDown={(e) => e.stopPropagation()}
+          className="flex items-center space-x-1 shrink-0 z-20"
+        >
           {/* Switch to Slim Spotify Strip Bar */}
           <button
-            onClick={handleToggleCompact}
+            type="button"
+            data-tauri-drag-region="false"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={handleSetSlimMode}
             title="Switch to Slim Strip Mode"
-            className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-aura-800 transition-colors"
+            className="p-1.5 rounded-md text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-aura-800 transition-colors cursor-pointer"
           >
-            <StripModeIcon className="w-3.5 h-3.5" />
+            <StripModeIcon className="w-3.5 h-3.5 pointer-events-none" />
           </button>
 
           {/* Always on top toggle pin */}
           <button
+            type="button"
+            data-tauri-drag-region="false"
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={handleTogglePin}
             title={isAlwaysOnTop ? 'Always on Top: Active (Click to unpin)' : 'Always on Top: Inactive'}
-            className={`p-1 rounded-md transition-colors ${
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${
               isAlwaysOnTop
                 ? 'text-amber-600 dark:text-amber-400 bg-amber-500/15'
-                : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-aura-800'
+                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-aura-800'
             }`}
           >
-            <PinIcon className="w-3.5 h-3.5" pinned={isAlwaysOnTop} />
+            <PinIcon className="w-3.5 h-3.5 pointer-events-none" pinned={isAlwaysOnTop} />
           </button>
 
           {/* Expand to Main Desktop Window */}
           <button
+            type="button"
+            data-tauri-drag-region="false"
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={handleExpandToFullApp}
             title="Expand to Full Application"
-            className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-aura-800 transition-colors"
+            className="p-1.5 rounded-md text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-aura-800 transition-colors cursor-pointer"
           >
-            <MaximizeIcon className="w-3.5 h-3.5" />
+            <MaximizeIcon className="w-3.5 h-3.5 pointer-events-none" />
           </button>
 
           {/* Close mini player / return to full app */}
           <button
+            type="button"
+            data-tauri-drag-region="false"
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={handleExpandToFullApp}
             title="Close mini player"
-            className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-aura-800 transition-colors"
+            className="p-1.5 rounded-md text-slate-500 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-aura-800 transition-colors cursor-pointer"
           >
-            <CloseIcon className="w-3.5 h-3.5" />
+            <CloseIcon className="w-3.5 h-3.5 pointer-events-none" />
           </button>
         </div>
       </div>
@@ -395,23 +508,39 @@ export const MiniPlayer: React.FC = () => {
             <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-aura-800 text-amber-600 dark:text-amber-400 border border-slate-200/60 dark:border-transparent font-medium">
               {timeRemaining}
             </span>
-            <div className="relative">
+            <div
+              className="relative"
+              data-tauri-drag-region="false"
+              data-no-drag="true"
+              onMouseDown={(e) => e.stopPropagation()}
+            >
               <button
+                type="button"
+                data-tauri-drag-region="false"
+                onMouseDown={(e) => e.stopPropagation()}
                 onClick={() => setShowSpeedMenu(!showSpeedMenu)}
-                className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-aura-800 hover:bg-slate-200 dark:hover:bg-aura-750 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-transparent transition-colors font-medium"
+                className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-aura-800 hover:bg-slate-200 dark:hover:bg-aura-750 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-transparent transition-colors font-medium cursor-pointer"
               >
                 {playbackRate.toFixed(2).replace(/\.00$/, '')}x
               </button>
               {showSpeedMenu && (
-                <div className="absolute bottom-full left-0 mb-1 bg-white dark:bg-aura-900 border border-slate-200 dark:border-aura-750 rounded-lg p-1 shadow-2xl flex flex-col space-y-0.5 z-50 min-w-[50px]">
+                <div
+                  data-tauri-drag-region="false"
+                  data-no-drag="true"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  className="absolute bottom-full left-0 mb-1 bg-white dark:bg-aura-900 border border-slate-200 dark:border-aura-750 rounded-lg p-1 shadow-2xl flex flex-col space-y-0.5 z-50 min-w-[50px]"
+                >
                   {SPEED_PRESETS.map((rate) => (
                     <button
                       key={rate}
+                      type="button"
+                      data-tauri-drag-region="false"
+                      onMouseDown={(e) => e.stopPropagation()}
                       onClick={() => {
                         setSpeed(rate);
                         setShowSpeedMenu(false);
                       }}
-                      className={`text-[10px] px-2 py-0.5 rounded text-left font-mono transition-colors ${
+                      className={`text-[10px] px-2 py-0.5 rounded text-left font-mono transition-colors cursor-pointer ${
                         playbackRate === rate
                           ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold'
                           : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-aura-800'
@@ -428,7 +557,12 @@ export const MiniPlayer: React.FC = () => {
       </div>
 
       {/* Bottom: Interactive Scrubber & Controls - LOCKED with shrink-0 so NEVER hidden! */}
-      <div className="space-y-1 shrink-0 pt-0.5">
+      <div
+        data-tauri-drag-region="false"
+        data-no-drag="true"
+        onMouseDown={(e) => e.stopPropagation()}
+        className="space-y-1 shrink-0 pt-0.5 z-20"
+      >
         {/* Interactive Scrub Bar */}
         <div className="space-y-0.5">
           <div
@@ -450,51 +584,66 @@ export const MiniPlayer: React.FC = () => {
         <div className="flex items-center justify-center space-x-2 py-0.5">
           {currentBook.is_multi_track && (
             <button
+              type="button"
+              data-tauri-drag-region="false"
+              onMouseDown={(e) => e.stopPropagation()}
               onClick={previousChapter}
               disabled={currentTrackIndex === 0}
-              className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-aura-800 rounded disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-aura-800 rounded disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
               title="Previous Chapter"
             >
-              <SkipPrevIcon className="w-3.5 h-3.5" />
+              <SkipPrevIcon className="w-3.5 h-3.5 pointer-events-none" />
             </button>
           )}
 
           <button
+            type="button"
+            data-tauri-drag-region="false"
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={() => skipBackward(30)}
-            className="p-1 text-slate-600 hover:text-amber-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-amber-400 dark:hover:bg-aura-800 rounded transition-colors"
+            className="p-1 text-slate-600 hover:text-amber-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-amber-400 dark:hover:bg-aura-800 rounded transition-colors cursor-pointer"
             title="Rewind 30s"
           >
-            <SkipBack30Icon className="w-4 h-4" />
+            <SkipBack30Icon className="w-4 h-4 pointer-events-none" />
           </button>
 
           <button
+            type="button"
+            data-tauri-drag-region="false"
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={togglePlay}
-            className="w-8 h-8 rounded-full bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 shadow-md transition-all flex items-center justify-center font-bold"
+            className="w-8 h-8 rounded-full bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 shadow-md transition-all flex items-center justify-center font-bold cursor-pointer"
             title={isPlaying ? 'Pause' : 'Play'}
           >
             {isPlaying ? (
-              <PauseIcon className="w-4 h-4" />
+              <PauseIcon className="w-4 h-4 pointer-events-none" />
             ) : (
-              <PlayIcon className="w-4 h-4 ml-0.5" />
+              <PlayIcon className="w-4 h-4 ml-0.5 pointer-events-none" />
             )}
           </button>
 
           <button
+            type="button"
+            data-tauri-drag-region="false"
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={() => skipForward(30)}
-            className="p-1 text-slate-600 hover:text-amber-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-amber-400 dark:hover:bg-aura-800 rounded transition-colors"
+            className="p-1 text-slate-600 hover:text-amber-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-amber-400 dark:hover:bg-aura-800 rounded transition-colors cursor-pointer"
             title="Fast Forward 30s"
           >
-            <SkipForward30Icon className="w-4 h-4" />
+            <SkipForward30Icon className="w-4 h-4 pointer-events-none" />
           </button>
 
           {currentBook.is_multi_track && (
             <button
+              type="button"
+              data-tauri-drag-region="false"
+              onMouseDown={(e) => e.stopPropagation()}
               onClick={nextChapter}
               disabled={currentTrackIndex >= (currentBook.tracks?.length || 1) - 1}
-              className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-aura-800 rounded disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-aura-800 rounded disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
               title="Next Chapter"
             >
-              <SkipNextIcon className="w-3.5 h-3.5" />
+              <SkipNextIcon className="w-3.5 h-3.5 pointer-events-none" />
             </button>
           )}
         </div>

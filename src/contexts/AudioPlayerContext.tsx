@@ -263,8 +263,11 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         audio.playbackRate = playbackRate;
         audio.volume = isMuted ? 0 : volume;
 
-        // Hook up metadata handler before assigning src
+        // Hook up metadata handler before assigning src (one-shot for initial load)
+        let initialPositionApplied = false;
+
         const applyResumePosition = () => {
+          if (initialPositionApplied) return;
           const totalDur = audio.duration || initialDuration;
           if (totalDur > 0) {
             setDuration(totalDur);
@@ -273,6 +276,8 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
             try {
               audio.currentTime = resumePosition;
               setCurrentTime(resumePosition);
+              latestPositionRef.current = resumePosition;
+              initialPositionApplied = true;
             } catch (err) {
               console.warn('Seek failed on metadata:', err);
             }
@@ -280,22 +285,22 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
             try {
               audio.currentTime = 0;
               setCurrentTime(0);
+              latestPositionRef.current = 0;
+              initialPositionApplied = true;
             } catch (err) {}
+          } else {
+            initialPositionApplied = true;
           }
+
+          // Disconnect initial position listeners so user seeking during playback is NEVER overridden!
+          audio.onloadedmetadata = null;
+          audio.oncanplay = null;
         };
 
         audio.onloadedmetadata = applyResumePosition;
         audio.oncanplay = () => {
-          if (startTime === 0 && audio.currentTime !== 0) {
-            try {
-              audio.currentTime = 0;
-              setCurrentTime(0);
-            } catch (err) {}
-          } else if (resumePosition > 0 && Math.abs(audio.currentTime - resumePosition) > 1.5) {
-            try {
-              audio.currentTime = resumePosition;
-              setCurrentTime(resumePosition);
-            } catch (err) {}
+          if (!initialPositionApplied) {
+            applyResumePosition();
           }
         };
 
@@ -441,10 +446,16 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     (seconds: number) => {
       const audio = audioRef.current;
       if (audio) {
-        const target = Math.max(0, Math.min(seconds, duration));
-        audio.currentTime = target;
-        setCurrentTime(target);
-        flushPlaybackState();
+        const maxDur = duration > 0 ? duration : (audio.duration || 0);
+        const target = maxDur > 0 ? Math.max(0, Math.min(seconds, maxDur)) : Math.max(0, seconds);
+        try {
+          audio.currentTime = target;
+          setCurrentTime(target);
+          latestPositionRef.current = target;
+          flushPlaybackState();
+        } catch (err) {
+          console.warn('Seek error:', err);
+        }
       }
     },
     [duration, flushPlaybackState]
@@ -452,14 +463,16 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const skipForward = useCallback(
     (seconds: number = DEFAULT_SKIP_SECONDS) => {
-      seek(currentTime + seconds);
+      const base = audioRef.current?.currentTime ?? currentTime;
+      seek(base + seconds);
     },
     [currentTime, seek]
   );
 
   const skipBackward = useCallback(
     (seconds: number = DEFAULT_SKIP_SECONDS) => {
-      seek(currentTime - seconds);
+      const base = audioRef.current?.currentTime ?? currentTime;
+      seek(base - seconds);
     },
     [currentTime, seek]
   );

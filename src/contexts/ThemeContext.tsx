@@ -19,7 +19,16 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return saved === 'light' || saved === 'night' || saved === 'system' ? saved : 'system';
   });
 
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>('dark');
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
+    const mode = saved === 'light' || saved === 'night' || saved === 'system' ? saved : 'system';
+    if (mode === 'system') {
+      return typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+    }
+    return mode === 'night' ? 'dark' : 'light';
+  });
 
   const applyTheme = useCallback((mode: ThemeMode) => {
     const root = document.documentElement;
@@ -43,6 +52,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     root.setAttribute('data-theme', resolved);
+
+    // Sync native OS titlebar theme in Tauri
+    if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+      import('@tauri-apps/api/window')
+        .then(({ getCurrentWindow }) => {
+          getCurrentWindow().setTheme(resolved === 'dark' ? 'dark' : 'light').catch(() => {});
+        })
+        .catch(() => {});
+    }
   }, []);
 
   useEffect(() => {

@@ -5,6 +5,16 @@ export const isTauri = (): boolean => {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 };
 
+// Pre-cache core invoke function for instant, zero-delay responses (e.g. window dragging)
+let cachedInvoke: (<T = unknown>(cmd: string, args?: Record<string, unknown>) => Promise<T>) | null = null;
+if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+  import('@tauri-apps/api/core')
+    .then((mod) => {
+      cachedInvoke = mod.invoke;
+    })
+    .catch(() => {});
+}
+
 // Mock sample books for browser preview mode
 const MOCK_BOOKS: Audiobook[] = [
   {
@@ -316,8 +326,17 @@ export const tauriBridge = {
 
   startDragging: async (): Promise<void> => {
     if (isTauri()) {
-      const { invoke } = await import('@tauri-apps/api/core');
-      await invoke('start_dragging');
+      try {
+        if (cachedInvoke) {
+          await cachedInvoke('start_dragging');
+          return;
+        }
+        const { invoke } = await import('@tauri-apps/api/core');
+        cachedInvoke = invoke;
+        await invoke('start_dragging');
+      } catch (err) {
+        console.warn('Failed to start dragging window:', err);
+      }
     }
   },
 

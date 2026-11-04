@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAudioPlayer, formatTime } from '../../hooks/useAudioPlayer';
 import {
   PlayIcon,
@@ -52,6 +52,25 @@ export const NowPlayingView: React.FC<NowPlayingViewProps> = ({ onOpenLibrary })
   const [bmTitle, setBmTitle] = useState('');
   const [bmNote, setBmNote] = useState('');
   const [showBmForm, setShowBmForm] = useState(false);
+
+  // Local scrubbing state to ensure silky-smooth dragging without fighting audio updates
+  const [isScrubbing, setIsScrubbing] = useState(false);
+  const [scrubValue, setScrubValue] = useState(0);
+  const scrubValueRef = useRef(scrubValue);
+  scrubValueRef.current = scrubValue;
+
+  const displayTime = isScrubbing ? scrubValue : currentTime;
+  const displayFormattedCurrentTime = formatTime(displayTime);
+
+  useEffect(() => {
+    if (!isScrubbing) return;
+    const handleGlobalPointerUp = () => {
+      setIsScrubbing(false);
+      seek(scrubValueRef.current);
+    };
+    window.addEventListener('pointerup', handleGlobalPointerUp);
+    return () => window.removeEventListener('pointerup', handleGlobalPointerUp);
+  }, [isScrubbing, seek]);
 
   const SPEED_PRESETS = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5];
 
@@ -162,12 +181,26 @@ export const NowPlayingView: React.FC<NowPlayingViewProps> = ({ onOpenLibrary })
               min={0}
               max={duration || 100}
               step={1}
-              value={currentTime}
-              onChange={(e) => seek(parseFloat(e.target.value))}
+              value={displayTime}
+              onPointerDown={() => {
+                setIsScrubbing(true);
+                setScrubValue(currentTime);
+              }}
+              onChange={(e) => {
+                const val = parseFloat(e.target.value);
+                setScrubValue(val);
+                if (!isScrubbing) {
+                  seek(val);
+                }
+              }}
+              onPointerUp={(e) => {
+                setIsScrubbing(false);
+                seek(parseFloat((e.target as HTMLInputElement).value));
+              }}
               className="w-full h-2 bg-slate-200 dark:bg-aura-800 rounded-lg cursor-pointer accent-amber-500"
             />
             <div className="flex justify-between text-xs font-mono text-slate-500 dark:text-slate-400">
-              <span>{formattedCurrentTime}</span>
+              <span>{displayFormattedCurrentTime}</span>
               <span>{formattedDuration}</span>
             </div>
           </div>

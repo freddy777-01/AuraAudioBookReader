@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useAudioPlayer } from '../../hooks/useAudioPlayer';
+import React, { useState, useEffect, useRef } from 'react';
+import { useAudioPlayer, formatTime } from '../../hooks/useAudioPlayer';
 import {
   PlayIcon,
   PauseIcon,
@@ -45,6 +45,25 @@ export const FullScreenPlayer: React.FC = () => {
 
   const [newBookmarkTitle, setNewBookmarkTitle] = useState('');
   const [showAddBookmark, setShowAddBookmark] = useState(false);
+
+  // Local scrubbing state to ensure silky-smooth dragging without fighting audio updates
+  const [isScrubbing, setIsScrubbing] = useState(false);
+  const [scrubValue, setScrubValue] = useState(0);
+  const scrubValueRef = useRef(scrubValue);
+  scrubValueRef.current = scrubValue;
+
+  const displayTime = isScrubbing ? scrubValue : currentTime;
+  const displayFormattedCurrentTime = formatTime(displayTime);
+
+  useEffect(() => {
+    if (!isScrubbing) return;
+    const handleGlobalPointerUp = () => {
+      setIsScrubbing(false);
+      seek(scrubValueRef.current);
+    };
+    window.addEventListener('pointerup', handleGlobalPointerUp);
+    return () => window.removeEventListener('pointerup', handleGlobalPointerUp);
+  }, [isScrubbing, seek]);
 
   if (!currentBook) return null;
 
@@ -153,12 +172,26 @@ export const FullScreenPlayer: React.FC = () => {
             min={0}
             max={duration || 100}
             step={1}
-            value={currentTime}
-            onChange={(e) => seek(parseFloat(e.target.value))}
+            value={displayTime}
+            onPointerDown={() => {
+              setIsScrubbing(true);
+              setScrubValue(currentTime);
+            }}
+            onChange={(e) => {
+              const val = parseFloat(e.target.value);
+              setScrubValue(val);
+              if (!isScrubbing) {
+                seek(val);
+              }
+            }}
+            onPointerUp={(e) => {
+              setIsScrubbing(false);
+              seek(parseFloat((e.target as HTMLInputElement).value));
+            }}
             className="w-full h-2.5 bg-aura-800 rounded-lg cursor-pointer accent-amber-400"
           />
           <div className="flex justify-between text-xs font-mono text-slate-400">
-            <span>{formattedCurrentTime}</span>
+            <span>{displayFormattedCurrentTime}</span>
             <span>{formattedDuration}</span>
           </div>
         </div>
@@ -242,7 +275,7 @@ export const FullScreenPlayer: React.FC = () => {
               <input
                 type="text"
                 autoFocus
-                placeholder={`Bookmark at ${formattedCurrentTime} (e.g. Favorite Quote)...`}
+                placeholder={`Bookmark at ${displayFormattedCurrentTime} (e.g. Favorite Quote)...`}
                 value={newBookmarkTitle}
                 onChange={(e) => setNewBookmarkTitle(e.target.value)}
                 className="flex-1 px-4 py-2 bg-aura-900 border border-aura-700 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-amber-400"
