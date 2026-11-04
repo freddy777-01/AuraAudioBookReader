@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAudioPlayer } from '../../hooks/useAudioPlayer';
 import { tauriBridge } from '../../services/tauriBridge';
 import {
@@ -36,32 +36,33 @@ export const MiniPlayer: React.FC = () => {
     nextChapter,
     previousChapter,
     setSpeed,
-    toggleMiniPlayer,
+    closeMiniPlayer,
     addBookmark,
   } = useAudioPlayer();
 
   const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(true);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
-  // Default to slim horizontal strip mode on launch
+  // Default to slim horizontal strip mode
   const [isCompact, setIsCompact] = useState(true);
-  const [windowHeight, setWindowHeight] = useState(
-    typeof window !== 'undefined' ? window.innerHeight : 56
-  );
   const [bookmarkedRecently, setBookmarkedRecently] = useState(false);
+  const isTogglingRef = useRef(false);
 
   const SPEED_PRESETS = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
 
-  // Dynamically track window dimensions so dragging window edges transitions smoothly
+  // Dynamically synchronize dimensions when user drags edges
   useEffect(() => {
     const handleResize = () => {
-      setWindowHeight(window.innerHeight);
+      if (isTogglingRef.current) return;
+      const h = window.innerHeight;
+      if (h < 130) {
+        setIsCompact(true);
+      } else if (h > 150) {
+        setIsCompact(false);
+      }
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  // If height < 145px or isCompact is explicitly toggled, use the Spotify-style horizontal strip mode
-  const effectiveCompact = isCompact || windowHeight < 145;
 
   const handleTogglePin = async () => {
     const next = !isAlwaysOnTop;
@@ -70,14 +71,23 @@ export const MiniPlayer: React.FC = () => {
   };
 
   const handleToggleCompact = async () => {
-    const nextCompact = !effectiveCompact;
+    isTogglingRef.current = true;
+    const nextCompact = !isCompact;
     setIsCompact(nextCompact);
-    await tauriBridge.setMiniPlayerCompactMode(nextCompact);
+    try {
+      await tauriBridge.setMiniPlayerCompactMode(nextCompact);
+    } catch (err) {
+      console.error('Failed to toggle mini player compact mode:', err);
+    } finally {
+      setTimeout(() => {
+        isTogglingRef.current = false;
+      }, 400);
+    }
   };
 
-  const handleCloseMiniPlayer = async () => {
-    await tauriBridge.setMiniPlayerMode(false);
-    toggleMiniPlayer();
+  // Expand to full application
+  const handleExpandToFullApp = () => {
+    closeMiniPlayer();
   };
 
   const handleScrub = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -115,7 +125,7 @@ export const MiniPlayer: React.FC = () => {
       >
         <span className="text-xs text-slate-500 dark:text-slate-400">No audiobook active</span>
         <button
-          onClick={handleCloseMiniPlayer}
+          onClick={handleExpandToFullApp}
           className="mt-2 px-3 py-1 bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-medium hover:bg-amber-500/25 dark:hover:bg-amber-500/30 transition-colors"
         >
           Open AuraAudio
@@ -125,9 +135,9 @@ export const MiniPlayer: React.FC = () => {
   }
 
   // -------------------------------------------------------------
-  // 1. SLIM HORIZONTAL STRIP VIEW (Frameless Floating Player - Image 1)
+  // 1. SLIM HORIZONTAL STRIP VIEW (Frameless Floating Player)
   // -------------------------------------------------------------
-  if (effectiveCompact) {
+  if (isCompact) {
     return (
       <div
         data-tauri-drag-region
@@ -138,7 +148,7 @@ export const MiniPlayer: React.FC = () => {
           {/* Close mini player / return to full app & 6-dot drag grip */}
           <div className="flex flex-col items-center justify-center space-y-0.5 shrink-0">
             <button
-              onClick={handleCloseMiniPlayer}
+              onClick={handleExpandToFullApp}
               title="Close mini player (Return to AuraAudio)"
               className="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors p-0.5 rounded hover:bg-slate-100 dark:hover:bg-aura-800"
             >
@@ -214,7 +224,7 @@ export const MiniPlayer: React.FC = () => {
             <CheckCircleIcon className="w-4 h-4" />
           </button>
 
-          {/* Rewind 30s Button (Replaced chapter prev) */}
+          {/* Rewind 30s Button */}
           <button
             onClick={() => skipBackward(30)}
             className="p-1 text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-aura-800 rounded transition-colors"
@@ -236,7 +246,7 @@ export const MiniPlayer: React.FC = () => {
             )}
           </button>
 
-          {/* Fast Forward 30s Button (Replaced chapter next) */}
+          {/* Fast Forward 30s Button */}
           <button
             onClick={() => skipForward(30)}
             className="p-1 text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-aura-800 rounded transition-colors"
@@ -284,15 +294,15 @@ export const MiniPlayer: React.FC = () => {
   }
 
   // -------------------------------------------------------------
-  // 2. CARD VIEW (Optimized with zero cutoff & adaptive theming)
+  // 2. CARD VIEW (Frameless, clean floating card without OS bar)
   // -------------------------------------------------------------
   return (
-    <div className="h-screen w-screen bg-white dark:bg-aura-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between p-2.5 sm:p-3 select-none overflow-hidden border border-slate-200/90 dark:border-aura-800/80 shadow-2xl relative transition-colors duration-200">
-      {/* Top Drag Bar & Action Controls */}
+    <div className="h-screen w-screen bg-white dark:bg-aura-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between p-2.5 sm:p-3 select-none overflow-hidden border border-slate-200/90 dark:border-aura-800/80 shadow-2xl relative transition-colors duration-200 rounded-xl">
+      {/* Top Header Bar */}
       <div
         data-tauri-drag-region
         onMouseDown={handleStartDrag}
-        className="flex items-center justify-between cursor-move pb-1 shrink-0"
+        className="flex items-center justify-between cursor-grab active:cursor-grabbing pb-1 shrink-0"
       >
         <div data-tauri-drag-region className="flex items-center space-x-1.5 min-w-0">
           <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
@@ -302,10 +312,10 @@ export const MiniPlayer: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-1 shrink-0">
-          {/* Switch to Slim Spotify Pill Bar */}
+          {/* Switch to Slim Spotify Strip Bar */}
           <button
             onClick={handleToggleCompact}
-            title="Switch to Slim Strip Mode (Spotify style)"
+            title="Switch to Slim Strip Mode"
             className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-aura-800 transition-colors"
           >
             <StripModeIcon className="w-3.5 h-3.5" />
@@ -326,23 +336,32 @@ export const MiniPlayer: React.FC = () => {
 
           {/* Expand to Main Desktop Window */}
           <button
-            onClick={handleCloseMiniPlayer}
+            onClick={handleExpandToFullApp}
             title="Expand to Full Application"
             className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-aura-800 transition-colors"
           >
             <MaximizeIcon className="w-3.5 h-3.5" />
           </button>
+
+          {/* Close mini player / return to full app */}
+          <button
+            onClick={handleExpandToFullApp}
+            title="Close mini player"
+            className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-aura-800 transition-colors"
+          >
+            <CloseIcon className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
-      {/* Middle: Audiobook Metadata & Cover Art */}
+      {/* Middle: Audiobook Metadata & Cover Art (Click & drag anywhere to move!) */}
       <div
         data-tauri-drag-region
         onMouseDown={handleStartDrag}
-        className="flex items-center space-x-2.5 my-auto py-1 min-h-0 flex-1 cursor-move"
+        className="flex items-center space-x-2.5 my-auto py-1 min-h-0 flex-1 cursor-grab active:cursor-grabbing"
       >
         {/* Thumbnail Artwork */}
-        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-lg overflow-hidden shrink-0 bg-slate-100 dark:bg-aura-900 border border-slate-200 dark:border-aura-800 shadow-sm">
+        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-lg overflow-hidden shrink-0 bg-slate-100 dark:bg-aura-900 border border-slate-200 dark:border-aura-800 shadow-sm pointer-events-none">
           {currentBook.cover_image ? (
             <img
               src={currentBook.cover_image}
@@ -357,7 +376,7 @@ export const MiniPlayer: React.FC = () => {
         </div>
 
         {/* Title & Chapter Details */}
-        <div className="min-w-0 flex-1">
+        <div data-tauri-drag-region className="min-w-0 flex-1 pointer-events-none">
           <h4
             className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate"
             title={currentBook.title}
@@ -372,7 +391,7 @@ export const MiniPlayer: React.FC = () => {
               ? `Ch. ${currentTrackIndex + 1}: ${currentTrackTitle}`
               : currentBook.author || 'Audiobook'}
           </p>
-          <div className="flex items-center space-x-2 mt-1">
+          <div className="flex items-center space-x-2 mt-1 pointer-events-auto">
             <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-aura-800 text-amber-600 dark:text-amber-400 border border-slate-200/60 dark:border-transparent font-medium">
               {timeRemaining}
             </span>

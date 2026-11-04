@@ -36,6 +36,7 @@ export interface PlayerControls {
   previousChapter: () => Promise<void>;
   toggleFullScreen: () => void;
   toggleMiniPlayer: () => void;
+  closeMiniPlayer: () => void;
   toggleBookmarks: () => void;
   toggleChapters: (book?: Audiobook | null) => void;
   addBookmark: (title: string, note?: string) => Promise<void>;

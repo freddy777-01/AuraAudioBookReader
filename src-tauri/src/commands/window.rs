@@ -3,75 +3,42 @@ use tauri::{LogicalSize, WebviewWindow};
 #[tauri::command]
 pub fn set_mini_player_mode(window: WebviewWindow, mini: bool) -> Result<(), String> {
     if mini {
-        // On entering mini player, start in the sleek frameless slim strip without OS title bar
-        window
-            .set_decorations(false)
-            .map_err(|e| e.to_string())?;
+        // Mini player mode: ALWAYS frameless (no native OS title bar in either slim or card mode)
+        let _ = window.set_decorations(false);
+        let _ = window.set_always_on_top(true);
 
-        window
-            .set_min_size(Some(LogicalSize::new(280.0, 50.0)))
-            .map_err(|e| e.to_string())?;
+        // Set low minimum bounds so resizing between slim and card mode never gets clamped
+        let _ = window.set_min_size(Some(LogicalSize::new(260.0, 48.0)));
 
-        window
-            .set_size(LogicalSize::new(390.0, 56.0))
-            .map_err(|e| e.to_string())?;
-
-        // Float on top of other desktop windows
-        window
-            .set_always_on_top(true)
-            .map_err(|e| e.to_string())?;
+        // Default to slim strip
+        let _ = window.set_size(LogicalSize::new(390.0, 56.0));
     } else {
-        // Restore standard window decorations (minimize, maximize, close)
-        window
-            .set_decorations(true)
-            .map_err(|e| e.to_string())?;
+        // Full desktop app mode: restore standard desktop window
+        let _ = window.set_always_on_top(false);
 
-        // Disable floating on top
-        window
-            .set_always_on_top(false)
-            .map_err(|e| e.to_string())?;
+        // Expand size FIRST before setting min size, preventing Windows constraint clamp
+        let _ = window.set_size(LogicalSize::new(1280.0, 840.0));
+        let _ = window.set_min_size(Some(LogicalSize::new(960.0, 640.0)));
 
-        // Restore minimum window constraints
-        window
-            .set_min_size(Some(LogicalSize::new(960.0, 640.0)))
-            .map_err(|e| e.to_string())?;
-
-        // Restore default desktop dimensions
-        window
-            .set_size(LogicalSize::new(1280.0, 840.0))
-            .map_err(|e| e.to_string())?;
+        // Restore native window title bar
+        let _ = window.set_decorations(true);
+        let _ = window.center();
     }
     Ok(())
 }
 
 #[tauri::command]
 pub fn set_mini_player_compact_mode(window: WebviewWindow, compact: bool) -> Result<(), String> {
+    // Both slim and card mini modes stay 100% frameless (no OS title bar)
+    let _ = window.set_decorations(false);
+    let _ = window.set_min_size(Some(LogicalSize::new(260.0, 48.0)));
+
     if compact {
-        // Remove OS title bar for frameless floating widget
-        window
-            .set_decorations(false)
-            .map_err(|e| e.to_string())?;
-
-        window
-            .set_min_size(Some(LogicalSize::new(280.0, 50.0)))
-            .map_err(|e| e.to_string())?;
-
-        window
-            .set_size(LogicalSize::new(390.0, 56.0))
-            .map_err(|e| e.to_string())?;
+        // Slim mode (390 x 56)
+        let _ = window.set_size(LogicalSize::new(390.0, 56.0));
     } else {
-        // Restore title bar for card view
-        window
-            .set_decorations(true)
-            .map_err(|e| e.to_string())?;
-
-        window
-            .set_min_size(Some(LogicalSize::new(320.0, 180.0)))
-            .map_err(|e| e.to_string())?;
-
-        window
-            .set_size(LogicalSize::new(360.0, 220.0))
-            .map_err(|e| e.to_string())?;
+        // Card mode (360 x 200)
+        let _ = window.set_size(LogicalSize::new(360.0, 200.0));
     }
     Ok(())
 }

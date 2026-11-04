@@ -505,8 +505,17 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const toggleMiniPlayer = useCallback(() => {
     setIsMiniPlayer((prev) => {
       const next = !prev;
-      tauriBridge.setMiniPlayerMode(next);
+      tauriBridge.setMiniPlayerMode(next).catch((err) => {
+        console.error('Failed to set mini player mode:', err);
+      });
       return next;
+    });
+  }, []);
+
+  const closeMiniPlayer = useCallback(() => {
+    setIsMiniPlayer(false);
+    tauriBridge.setMiniPlayerMode(false).catch((err) => {
+      console.error('Failed to exit mini player mode:', err);
     });
   }, []);
 
@@ -587,6 +596,7 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     previousChapter,
     toggleFullScreen,
     toggleMiniPlayer,
+    closeMiniPlayer,
     toggleBookmarks,
     toggleChapters,
     addBookmark,
